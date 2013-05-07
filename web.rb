@@ -11,7 +11,7 @@ class SiteReader
   end
 end
 
+get '/'{"wrkz"}
 get('*'){
   SiteReader.new(request.url)
 }
-
