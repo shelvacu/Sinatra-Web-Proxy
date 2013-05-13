@@ -18,7 +18,11 @@ get '/proxy' do
   res = mangle_page params[:url]
   content_type res[:content_type], :charset => res[:charset]
   @site = res[:page]
-  haml :proxy, :layout => false
+  if res[:content_type] == "text/html" || res[:content_type] == "application/xhtml+xml"
+    haml :proxy, :layout => false
+  else
+    @site
+  end
 end
 
 def mangle_page(url)
