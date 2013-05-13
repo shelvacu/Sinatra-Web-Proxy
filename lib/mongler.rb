@@ -14,6 +14,7 @@ class Mongler
       @charset = f.charset
       @raw_page = f.read
     end
+    @doc = nil
     begin
       @doc = Nokogiri(@raw_page)
       @html = true
