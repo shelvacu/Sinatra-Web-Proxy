@@ -4,15 +4,24 @@ class InvalidURL < StandardError
 end
 
 class Mongler
-  def initialize(url,html = true)#,prefix=nil)
+  def initialize(url,page_params)#,prefix=nil)
     url = "http://#{url}" if !is_url?(url)
     raise InvaildURL if !is_url?(url)
-    @url = URI.parse(url)
+    @uri = URI.parse(url)
+    @uri.query ||= ""
+    @uri.query += URI.encode_www_form(page_params)
+    #RACK_ENV["processing_url"] = @uri
     #@prefix = prefix
-    open(url, "User-Agent" => "Mongler Ruby/#{RUBY_VERSION}") do |f|
-      @content_type = f.content_type
-      @charset = f.charset
-      @raw_page = f.read
+    begin
+      open(@uri.to_s, "User-Agent" => "Mongler Ruby/#{RUBY_VERSION}") do |f|
+        @content_type = f.content_type
+        @charset = f.charset
+        @raw_page = f.read
+      end
+    rescue OpenURI::HTTPError
+      @content_type = "text/plain"
+      @charset = "utf-8"
+      @raw_page = "teh other server spit out a 404 for url #{@uri.to_s}"
     end
     @doc = nil
     begin
@@ -28,9 +37,9 @@ class Mongler
   attr_reader :content_type,:charset
 
   def proxy_uri(page)
-    full_goto_url = @url.merge(page)
-    prox_uri = URI("/proxy")
-    prox_uri.query = URI.encode_www_form("url" => full_goto_url.to_s)
+    full_goto_url = @uri.merge(page)
+    prox_uri = URI("/proxy/#{URI.encode_www_form_component full_goto_url.to_s}/")
+    #prox_uri.query = URI.encode_www_form("url" => full_goto_url.to_s)
     return prox_uri
   end
 
@@ -39,7 +48,7 @@ class Mongler
   end
 
   def is_url?(url=nil)
-    url.nil? ? !@url.scheme.nil? : !(URI.parse(url).scheme.nil?)
+    url.nil? ? !@uri.scheme.nil? : !(URI.parse(url).scheme.nil?)
   end
 
   def mangle(tag, attribute)
