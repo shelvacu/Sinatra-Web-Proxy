@@ -4,7 +4,7 @@ class InvalidURL < StandardError
 end
 
 class Mongler
-  def initialize(url)#,prefix=nil)
+  def initialize(url,html = true)#,prefix=nil)
     url = "http://#{url}" if !is_url?(url)
     raise InvaildURL if !is_url?(url)
     @url = URI.parse(url)
@@ -22,6 +22,7 @@ class Mongler
       #assume the document is not html
       @html = false
     end
+    @html &&= @content_type.include?("html")
   end
   
   attr_reader :content_type,:charset
